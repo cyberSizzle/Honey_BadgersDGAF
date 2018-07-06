@@ -3,6 +3,7 @@ from requests import get
 import smtplib
 """
 v1.0
+Currently designed for python3 and Linux
 This script is designed to email your
 external ip address if it changes. To
 use this script input your email
