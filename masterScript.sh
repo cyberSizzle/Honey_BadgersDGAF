@@ -69,8 +69,8 @@ echo
 #set the host name
 read -p "Do you want to set a different hostname (y/n)? " hostquest
 	if [[ $hostquest == "y" ]]; then
-	read -p "Enter the hostname: " hosts
-	echo $hosts > /etc/hostname
+		read -p "Enter the hostname: " hosts
+		echo $hosts > /etc/hostname
 	fi
 echo
 
@@ -82,8 +82,8 @@ ifconfig $interface up
 #set the MAC
 read -p "Do you want to set a different MAC (y/n)? " macquest
 	if [[ $macquest == "y" ]]; then
-	read -p "Enter the MAC Address: " mac
-	ip link set $interface address $mac
+		read -p "Enter the MAC Address: " mac
+		ip link set $interface address $mac
 	fi
 echo
 
@@ -102,9 +102,9 @@ echo "Now generating the target, alive, and unreachable files..."
 
 #make the targs file
 targets=$(</etc/target.hosts)
-for i in $targets; do
-	nmap -n -sL $i | grep "Nmap scan" | cut -d" " -f5 >> $workdir/targs
-done
+	for i in $targets; do
+		nmap -n -sL $i | grep "Nmap scan" | cut -d" " -f5 >> $workdir/targs
+	done
 
 #make the alives file
 fping -aq -f $workdir/targs > $workdir/alives
