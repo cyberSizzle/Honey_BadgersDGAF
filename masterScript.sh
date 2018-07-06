@@ -1,7 +1,10 @@
 #!/bin/bash
 clear
-echo -e "This program must be run as root. Sudo will not suffice.\nIf you are not root, exit this program."
-sleep 4
+user=$(id -u)
+if [[ $user != 0 ]] ; then
+	echo "This program must be run as root... Exiting."
+	exit 0
+fi
 echo
 #configure the firewall
 /usr/local/sbin/set_fwprofile
@@ -26,11 +29,10 @@ echo $exclude > /home/assessor/exclude.txt
 tr ',' '\n' < /home/assessor/exclude.txt > /home/assessor/range
 grep -v "-" /home/assessor/range > /etc/exclude.hosts
 
-	if [[ $exclude = *"-"* \\; then
+	if [[ $exclude = *"-"* ]] ; then
 		grep "-" /home/assessor/range > /home/assessor/range.txt
 		nope=$(</home/assessor/range.txt)
 		nmap -n -sL $nope | grep "Nmap scan" | cut -d" " -f5 >> /etc/exclude.hosts
-		sleep 5
 	fi
 
 rm /home/assessor/exclude.txt /home/assessor/range*
@@ -57,11 +59,11 @@ echo
 read -p "Gateway: " gate
 echo
 ifconfig $interface $ips netmask $nets
-route add default $gate $interface
+route add default gw $gate $interface
 
 #set the DNS 
-read -p "Enter the DNS Server IP " dom
-echo -e "search dmss\nnameserver $dns" > /etc/resolv.conf
+read -p "Enter the DNS Server IP: " dom
+echo -e "search dmss\nnameserver $dom" > /etc/resolv.conf
 echo
 
 #set the host name
@@ -72,6 +74,11 @@ read -p "Do you want to set a different hostname (y/n)? " hostquest
 	fi
 echo
 
+#reset the interface
+ifconfig $interface down
+sleep 5
+ifconfig $interface up
+
 #set the MAC
 read -p "Do you want to set a different MAC (y/n)? " macquest
 	if [[ $macquest == "y" ]]; then
@@ -79,12 +86,6 @@ read -p "Do you want to set a different MAC (y/n)? " macquest
 	ip link set $interface address $mac
 	fi
 echo
-
-#reset the interface
-ifconfig $interface down
-sleep 5
-ifconfig $interface up
-
 
 cat /etc/resolv.conf
 echo
@@ -95,13 +96,15 @@ echo
 
 read -p "What is the working directory's full path? (don't include the trailing '/'): " workdir
 
+mkdir -p $workdir
+
+echo "Now generating the target, alive, and unreachable files..."
 
 #make the targs file
 targets=$(</etc/target.hosts)
 for i in $targets; do
 	nmap -n -sL $i | grep "Nmap scan" | cut -d" " -f5 >> $workdir/targs
 done
-
 
 #make the alives file
 fping -aq -f $workdir/targs > $workdir/alives
